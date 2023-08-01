@@ -1,0 +1,5 @@
+# base36 extension
+comment = 'base36 datatype'
+default_version = '0.0.2'
+relocatable = true
+module_pathname = '$libdir/base36'

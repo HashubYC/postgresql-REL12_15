@@ -1,0 +1,7 @@
+TESTS         = $(wildcard test/sql/*.sql) # a.sql b.sql
+REGRESS       = $(patsubst test/sql/%.sql,%,$(TESTS)) # 替换通配符
+
+all:
+	@echo $(TESTS)
+	@echo $(REGRESS)
+	@echo "end"

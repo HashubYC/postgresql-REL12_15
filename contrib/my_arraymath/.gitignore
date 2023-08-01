@@ -1,0 +1,9 @@
+*.o
+*.a
+*.dll
+*.so
+*.so.*
+*.dylib
+regression.diffs
+regression.out
+results/*.out
