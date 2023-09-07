@@ -501,7 +501,7 @@ typedef struct NullableDatum
 
 /*
  * ObjectIdGetDatum
- *		Returns datum representation for an object identifier.
+ *		Returns datum representation for an object identifier. 返回对象标识符的数据表示形式。
  */
 
 #define ObjectIdGetDatum(X) ((Datum) (X))

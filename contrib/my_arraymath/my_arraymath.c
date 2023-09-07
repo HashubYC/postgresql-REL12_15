@@ -11,10 +11,12 @@
 
 #include <catalog/namespace.h>
 #include <catalog/pg_operator.h>
+#include <catalog/pg_type.h>
 #include <utils/array.h>
 #include <utils/builtins.h>
 #include <utils/syscache.h>
 #include <utils/typcache.h>
+
 
 /* Set up PgSQL */
 PG_MODULE_MAGIC;
@@ -30,9 +32,7 @@ arraymath_create_iterator(ArrayType *arr)
 }
 
 /*
- * Given an operator symbol ("+", "-", "=" etc) and type element types,
- * try to look up the appropriate function to do element level operations of
- * that type.
+ * 给定一个运算符符号("+"、"-"、"="、">"等) 和 元素类型，尝试查找适当的函数来执行该类型的运算。
  */
 static void
 arraymath_fmgrinfo_from_optype(const char *opstr, Oid element_type1,
@@ -42,7 +42,6 @@ arraymath_fmgrinfo_from_optype(const char *opstr, Oid element_type1,
     HeapTuple opertup;
     Form_pg_operator operform;
 
-    /* Look up the operator Oid that corresponds to this combination of symbol and data types */
     // 查找与符号和数据类型的组合相对应的操作符Oid
     operator_oid = OpernameGetOprid(list_make1(makeString(pstrdup(opstr))), element_type1, element_type2);
     if (!(operator_oid && OperatorIsVisible(operator_oid)))
@@ -50,8 +49,8 @@ arraymath_fmgrinfo_from_optype(const char *opstr, Oid element_type1,
         elog(ERROR, "operator does not exist");
     }
 
-    /* Lookup the function associated with the operator Oid. 查找与操作符Oid相关联的函数 */
-    opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operator_oid));
+    /* 查找与操作符Oid相关联的函数 */
+    opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operator_oid)); // opertup 是 HeapTuple 
     if (!HeapTupleIsValid(opertup))
     {
         elog(ERROR, "cannot find operator heap tuple");
@@ -84,7 +83,6 @@ arraymath_typentry_from_type(Oid element_type, int flags)
 }
 
 /*
- * Apply an operator using an element over all the elements of an array.
  * 对数组中的所有元素应用运算符。
  */
 static ArrayType *
@@ -96,9 +94,9 @@ arraymath_array_oper_elem(ArrayType *array1, const char *opname, Datum element2,
     Datum *elems;
     bool *nulls;
 
-    int ndims1 = ARR_NDIM(array1);
+    int ndims1 = ARR_NDIM(array1); // 获取数组维度
     int *dims1 = ARR_DIMS(array1);
-    Oid element_type1 = ARR_ELEMTYPE(array1);
+    Oid element_type1 = ARR_ELEMTYPE(array1); // 获取数组元素类型
     Oid rtype;
     int nelems, n = 0;
     FmgrInfo operfmgrinfo;
@@ -107,19 +105,18 @@ arraymath_array_oper_elem(ArrayType *array1, const char *opname, Datum element2,
     Datum element1;
     bool isnull1;
 
-    /* Only 1D arrays for now */
-    if (ndims1 != 1)
+    if (ndims1 != 1) // 判断数组维度是否 1
     {
         elog(ERROR, "only one-dimensional arrays are supported");
         return NULL;
     }
 
-    /* What function works for these input types? Populate operfmgrinfo. 什么函数适用于这些输入类型? */
-    /* What data type will the output array be? 输出数组的数据类型是什么? */
-    // operfmgrinfo = select * from pg_operator where oid = 523;
+    /* 哪个函数适用于这些输入类型? */
+    /* 输出数组的数据类型是什么? */
+    // fn_oid operfmgrinfo= FmgrInfo
     arraymath_fmgrinfo_from_optype(opname, element_type1, element_type2, &operfmgrinfo, &rtype);
 
-    /* How big is the output array? 输出数组有多大? */
+    /* 输出数组大小? */
     nelems = ArrayGetNItems(ndims1, dims1);
 
     /* If input is empty, return empty */
@@ -128,10 +125,9 @@ arraymath_array_oper_elem(ArrayType *array1, const char *opname, Datum element2,
         return construct_empty_array(rtype);
     }
 
-    // iterator1 = arraymath_create_iterator(array1);
-    iterator1 = array_create_iterator(array1, 0, NULL);
+    iterator1 = arraymath_create_iterator(array1);
 
-    /* Allocate space for output data. 为输出数据分配空间 */
+    /* 为输出数据分配空间 */
     elems = palloc(sizeof(Datum) * nelems);
     nulls = palloc(sizeof(bool) * nelems);
 
@@ -144,20 +140,20 @@ arraymath_array_oper_elem(ArrayType *array1, const char *opname, Datum element2,
         }
         else
         {
-            /* Apply the operator. 应用运算符 */
+            /* 应用运算符 */
             nulls[n] = false;
-            elems[n] = FunctionCall2(&operfmgrinfo, element1, element2);
+            elems[n] = FunctionCall2(&operfmgrinfo, element1, element2); // int4ge(element1 >= element2)
         }
         n++;
     }
 
-    /* Build 1-d output array. 构建一维输出数组 */
+    /* 构建一维输出数组 */
     tinfo = arraymath_typentry_from_type(rtype, 0);
     dims[0] = nelems;
     lbs[0] = 1;
     array_out = construct_md_array(elems, nulls, 1, dims, lbs, rtype, tinfo->typlen, tinfo->typbyval, tinfo->typalign);
 
-    /* Output is supposed to be a copy, so free the inputs. 输出应该是一个副本，所以释放输入 */
+    /* 输出应该是一个副本，所以释放 elems */
     pfree(elems);
     pfree(nulls);
 
@@ -174,7 +170,6 @@ arraymath_array_oper_elem(ArrayType *array1, const char *opname, Datum element2,
 /*
  * Compare an array to a constant element
  */
-Datum array_compare_value(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(array_compare_value);
 Datum array_compare_value(PG_FUNCTION_ARGS)
 {
@@ -196,7 +191,6 @@ Datum array_compare_value(PG_FUNCTION_ARGS)
 /*
  * Do math on an array using a constant element
  */
-Datum array_math_value(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(array_math_value);
 Datum array_math_value(PG_FUNCTION_ARGS)
 {
@@ -212,4 +206,113 @@ Datum array_math_value(PG_FUNCTION_ARGS)
 
     PG_FREE_IF_COPY(array1, 0);
     PG_RETURN_ARRAYTYPE_P(arrayout);
+}
+
+
+
+
+
+
+
+
+
+// update
+
+static void
+arraymath_check_type(Oid elmtype)
+{
+    /* Initialize result value */
+    if (elmtype != INT2OID &&
+        elmtype != INT4OID &&
+        elmtype != INT8OID &&
+        elmtype != FLOAT4OID &&
+        elmtype != FLOAT8OID &&
+        elmtype != NUMERICOID)
+    {
+        ereport(ERROR, (
+                           errmsg(
+                               "Array type must be NUMERIC, SMALLINT, INTEGER, BIGINT, REAL, or DOUBLE PRECISION")));
+    }
+}
+
+static Datum
+arraymath_minmax(ArrayType *arr, int mode)
+{
+    Oid arrType = ARR_ELEMTYPE(arr);
+    Datum elem, result = (Datum)0, cmp;
+    bool isnull, first = true;
+    TypeCacheEntry *typeCache = arraymath_typentry_from_type(arrType, TYPECACHE_CMP_PROC_FINFO);
+    FmgrInfo cmpFmgrInfo = typeCache->cmp_proc_finfo;
+    ArrayIterator iterator;
+
+    arraymath_check_type(arrType);
+
+    iterator = arraymath_create_iterator(arr);
+    while (array_iterate(iterator, &elem, &isnull))
+    {
+        if (isnull)
+            continue;
+
+        if (first)
+        {
+            result = elem;
+            first = false;
+            continue;
+        }
+
+        /* cmp_proc_finfo returns -1 for less than */
+        /* and 1 for greater than. Mode is -1 for min */
+        /* and 1 for max */
+        cmp = FunctionCall2(&cmpFmgrInfo, elem, result);
+        if ((mode < 0 && DatumGetInt32(cmp) < 0) ||
+            (mode > 0 && DatumGetInt32(cmp) > 0))
+        {
+            result = elem;
+        }
+    }
+    return result;
+}
+
+/*
+ * Do minimum of an array
+ */
+PG_FUNCTION_INFO_V1(array_min);
+Datum array_min(PG_FUNCTION_ARGS)
+{
+    ArrayType *arr = PG_GETARG_ARRAYTYPE_P(0);
+    size_t arrLen;
+
+    if (ARR_NDIM(arr) == 0)
+        PG_RETURN_NULL();
+
+    if (ARR_NDIM(arr) > 1)
+        ereport(ERROR, (errmsg("only one-dimensional arrays are supported")));
+
+    arrLen = (ARR_DIMS(arr))[0];
+    if (arrLen == 0)
+        PG_RETURN_NULL();
+
+    PG_RETURN_DATUM(arraymath_minmax(arr, -1));
+}
+
+/*
+ * Do maximum of an array
+ */
+PG_FUNCTION_INFO_V1(array_max);
+Datum array_max(PG_FUNCTION_ARGS)
+{
+    ArrayType *arr = PG_GETARG_ARRAYTYPE_P(0);
+    size_t arrLen;
+
+    if (ARR_NDIM(arr) == 0)
+        PG_RETURN_NULL();
+
+    if (ARR_NDIM(arr) > 1)
+        ereport(ERROR, (errmsg("only one-dimensional arrays are supported")));
+
+    arrLen = (ARR_DIMS(arr))[0];
+    if (arrLen == 0)
+        PG_RETURN_NULL();
+
+    PG_RETURN_DATUM(arraymath_minmax(arr, 1));
 }

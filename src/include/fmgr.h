@@ -44,14 +44,18 @@ typedef Datum (*PGFunction) (FunctionCallInfo fcinfo);
  * before a function can be called through fmgr.  If the same function is
  * to be called multiple times, the lookup need be done only once and the
  * info struct saved for re-use.
+ * 这个结构体保存了在通过fmgr调用函数之前必须查找的系统目录信息。如果要多次调用同一个函数，则只需执行一次查找，并保存info结构以供重用。
  *
  * Note that fn_expr really is parse-time-determined information about the
  * arguments, rather than about the function itself.  But it's convenient to
  * store it here rather than in FunctionCallInfoBaseData, where it might more
  * logically belong.
+ * 注意，fn_expr实际上是由 解析时间决定 的关于参数的信息，而不是关于函数本身的信息。
+ * 但是将它存储在这里比存储在FunctionCallInfoBaseData中更方便，在逻辑上它可能更属于FunctionCallInfoBaseData。
  *
  * fn_extra is available for use by the called function; all other fields
  * should be treated as read-only after the struct is created.
+ * Fn_extra可供被调用函数使用;在结构体创建之后，所有其他字段都应该被视为只读。
  */
 typedef struct FmgrInfo
 {
@@ -68,19 +72,24 @@ typedef struct FmgrInfo
 
 /*
  * This struct is the data actually passed to an fmgr-called function.
+ * 这个结构是实际传递给fmgr调用函数的数据。
  *
  * The called function is expected to set isnull, and possibly resultinfo or
  * fields in whatever resultinfo points to.  It should not change any other
  * fields.  (In particular, scribbling on the argument arrays is a bad idea,
  * since some callers assume they can re-call with the same arguments.)
+ * 被调用的函数应该设置isnull，也可能设置resultinfo或resultinfo所指向的字段。
+ * 它不应该改变任何其他字段。(特别是，在参数数组上乱涂乱画是一个坏主意，因为一些调用者认为他们可以用相同的参数重新调用。)
  *
  * Note that enough space for arguments needs to be provided, either by using
  * SizeForFunctionCallInfo() in dynamic allocations, or by using
  * LOCAL_FCINFO() for on-stack allocations.
+ * 请注意，需要为参数提供足够的空间，要么在动态分配中使用SizeForFunctionCallInfo()，要么在堆栈上分配中使用 LOCAL_FCINFO()。
  *
  * This struct is named *BaseData, rather than *Data, to break pre v12 code
  * that allocated FunctionCallInfoData itself, as it'd often silently break
  * old code due to no space for arguments being provided.
+ * 该结构被命名为*BaseData，而不是*Data，以中断分配FunctionCallInfoData本身的v12之前的代码，因为由于没有为参数提供空间，它通常会静默地中断旧代码。
  */
 typedef struct FunctionCallInfoBaseData
 {

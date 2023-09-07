@@ -36,7 +36,7 @@ static bool planstate_walk_members(PlanState **planstates, int nplans,
 
 /*
  *	exprType -
- *	  returns the Oid of the type of the expression's result.
+ *	  returns the Oid of the type of the expression's result. 返回表达式结果类型的Oid。
  */
 Oid
 exprType(const Node *expr)
@@ -55,7 +55,7 @@ exprType(const Node *expr)
 			type = ((const Const *) expr)->consttype;
 			break;
 		case T_Param:
-			type = ((const Param *) expr)->paramtype;
+			type = ((const Param *) expr)->paramtype; // p *(Param *)0x55c66a186870
 			break;
 		case T_Aggref:
 			type = ((const Aggref *) expr)->aggtype;

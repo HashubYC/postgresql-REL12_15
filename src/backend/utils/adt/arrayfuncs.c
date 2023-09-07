@@ -3303,7 +3303,8 @@ construct_array(Datum *elems, int nelems,
 /*
  * construct_md_array	--- simple method for constructing an array object
  *							with arbitrary dimensions and possible NULLs
- *
+ * 构造一个具有任意尺寸和可能的null的数组对象的简单方法
+ * 
  * elems: array of Datum items to become the array contents
  * nulls: array of is-null flags (can be NULL if no nulls)
  * ndims: number of dimensions

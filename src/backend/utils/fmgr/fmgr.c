@@ -1809,9 +1809,9 @@ get_fn_expr_rettype(FmgrInfo *flinfo)
 }
 
 /*
- * Get the actual type OID of a specific function argument (counting from 0)
+ * Get the actual type OID of a specific function argument (counting from 0)  获取特定函数参数的实际类型OID(从0开始计数)
  *
- * Returns InvalidOid if information is not available
+ * Returns InvalidOid if information is not available  如果信息不可用，返回InvalidOid
  */
 Oid
 get_fn_expr_argtype(FmgrInfo *flinfo, int argnum)

@@ -14,6 +14,7 @@ REGRESS       = $(patsubst test/sql/%.sql,%,$(TESTS))
 OBJS          = $(patsubst %.c,%.o,$(wildcard src/*.c)) # object files
 # final shared library to be build from multiple source files (OBJS)
 MODULE_big    = $(EXTENSION)
+HEADERS_base36 = base36.h
 
 
 # postgres build stuff

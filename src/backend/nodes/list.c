@@ -415,7 +415,8 @@ list_nth(const List *list, int n)
 
 /*
  * Return the integer value contained in the n'th element of the
- * specified list.
+ * specified list. 
+ * 返回指定列表的第n个元素中包含的数据值。(列表元素从0开始。)
  */
 int
 list_nth_int(const List *list, int n)

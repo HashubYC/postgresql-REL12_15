@@ -2,9 +2,10 @@ EXTENSION = my_arraymath
 MODULE_big = $(EXTENSION)
 OBJS = my_arraymath.o
 REGRESS = my_arraymath
-EXTRA_CLEAN =
 
-DATA = my_arraymath--0.0.1.sql 
+# $(wildcard *--*.sql)
+DATA = $(wildcard *--*.sql)
+
 
 
 PG_CONFIG = pg_config

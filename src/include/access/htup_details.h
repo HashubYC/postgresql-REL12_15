@@ -650,7 +650,7 @@ struct MinimalTupleData
 
 
 /*
- * GETSTRUCT - given a HeapTuple pointer, return address of the user data
+ * GETSTRUCT - given a HeapTuple pointer, return address of the user data 给定一个HeapTuple指针，返回用户数据的地址
  */
 #define GETSTRUCT(TUP) ((char *) ((TUP)->t_data) + (TUP)->t_data->t_hoff)
 

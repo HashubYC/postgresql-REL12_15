@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * nodes.h
- *	  Definitions for tagged nodes.
+ *	  Definitions for tagged nodes.  标记节点的定义。
  *
  *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
@@ -17,6 +17,7 @@
 /*
  * The first field of every node is NodeTag. Each node created (with makeNode)
  * will have one of the following tags as the value of its first field.
+ * 每个节点的第一个字段是NodeTag。创建的每个节点(使用makeNode)将使用以下标记之一作为其第一个字段的值。
  *
  * Note that inserting or deleting node types changes the numbers of other
  * node types later in the list.  This is no problem during development, since
@@ -142,7 +143,7 @@ typedef enum NodeTag
 	T_LimitState,
 
 	/*
-	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
+	 * TAGS FOR PRIMITIVE NODES (primnodes.h)  原始节点的标签(primnodes.h)
 	 */
 	T_Alias,
 	T_RangeVar,
@@ -520,6 +521,8 @@ typedef enum NodeTag
  * Hence the type of any node can be gotten by casting it to Node. Declaring
  * a variable to be of Node * (instead of void *) can also facilitate
  * debugging.
+ * 任何类型的节点的第一个字段肯定是NodeTag。因此，任何节点的类型都可以通过将其转换为node来获得。
+ * 将变量声明为Node *(而不是void *)也有助于调试。
  */
 typedef struct Node
 {
