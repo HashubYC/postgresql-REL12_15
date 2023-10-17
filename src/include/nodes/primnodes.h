@@ -623,9 +623,9 @@ typedef struct BoolExpr
  */
 typedef enum SubLinkType
 {
-	EXISTS_SUBLINK,
-	ALL_SUBLINK,
-	ANY_SUBLINK,
+	EXISTS_SUBLINK, // [NOT] EXISTS谓词
+	ALL_SUBLINK, // ALL 谓词
+	ANY_SUBLINK, // ANY/IN/SOME谓词
 	ROWCOMPARE_SUBLINK,
 	EXPR_SUBLINK,
 	MULTIEXPR_SUBLINK,
@@ -637,12 +637,12 @@ typedef enum SubLinkType
 typedef struct SubLink
 {
 	Expr		xpr;
-	SubLinkType subLinkType;	/* see above */
-	int			subLinkId;		/* ID (1..n); 0 if not MULTIEXPR */
-	Node	   *testexpr;		/* outer-query test for ALL/ANY/ROWCOMPARE */
-	List	   *operName;		/* originally specified operator name */
-	Node	   *subselect;		/* subselect as Query* or raw parsetree */
-	int			location;		/* token location, or -1 if unknown */
+	SubLinkType subLinkType;	/* see above 子连接类型 */
+	int			subLinkId;		/* ID (1..n); 0 if not MULTIEXPR  编号 */
+	Node	   *testexpr;		/* outer-query test for ALL/ANY/ROWCOMPARE  针对不同谓词的操作 */
+	List	   *operName;		/* originally specified operator name  子连接的操作符 */
+	Node	   *subselect;		/* subselect as Query* or raw parsetree  子连接中的子句所产生的查询树 */
+	int			location;		/* token location, or -1 if unknown  关键字在SQL语句中的位置 */
 } SubLink;
 
 /*
@@ -1444,7 +1444,7 @@ typedef struct TargetEntry
 typedef struct RangeTblRef
 {
 	NodeTag		type;
-	int			rtindex;
+	int			rtindex; // 对应的RangeTblEntry在Query->rtable中的位置
 } RangeTblRef;
 
 /*----------
@@ -1473,14 +1473,14 @@ typedef struct RangeTblRef
 typedef struct JoinExpr
 {
 	NodeTag		type;
-	JoinType	jointype;		/* type of join */
-	bool		isNatural;		/* Natural join? Will need to shape table */
-	Node	   *larg;			/* left subtree */
-	Node	   *rarg;			/* right subtree */
-	List	   *usingClause;	/* USING clause, if any (list of String) */
-	Node	   *quals;			/* qualifiers on join, if any */
-	Alias	   *alias;			/* user-written alias clause, if any */
-	int			rtindex;		/* RT index assigned for join, or 0 */
+	JoinType	jointype;		/* type of join 连接操作的类型，例如可以是LeftJoin等 */
+	bool		isNatural;		/* Natural join? Will need to shape table 是否是自然连接 */
+	Node	   *larg;			/* left subtree 连接操作的LHS（左侧）的表 */
+	Node	   *rarg;			/* right subtree 连接操作的RHS（右侧）的表 */
+	List	   *usingClause;	/* USING clause, if any (list of String) using子句对应的约束条件 */
+	Node	   *quals;			/* qualifiers on join, if any on子句对应的约束条件 */
+	Alias	   *alias;			/* user-written alias clause, if any 连接操作的投影列 */
+	int			rtindex;		/* RT index assigned for join, or 0 这个JoinExpr对应的RangeTblRef->rtindex */
 } JoinExpr;
 
 /*----------
@@ -1495,8 +1495,8 @@ typedef struct JoinExpr
 typedef struct FromExpr
 {
 	NodeTag		type;
-	List	   *fromlist;		/* List of join subtrees */
-	Node	   *quals;			/* qualifiers on join, if any */
+	List	   *fromlist;		/* List of join subtrees  FromExpr中包含几个表 */
+	Node	   *quals;			/* qualifiers on join, if any  fromlist中的表之间的约束条件 */
 } FromExpr;
 
 /*----------

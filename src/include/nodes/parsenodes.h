@@ -107,9 +107,9 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  */
 typedef struct Query
 {
-	NodeTag		type;
+	NodeTag		type; // Node类型
 
-	CmdType		commandType;	/* select|insert|update|delete|utility */
+	CmdType		commandType;	/* select|insert|update|delete|utility 语句类型：select|insert|update|delete|utility */
 
 	QuerySource querySource;	/* where did I come from? */
 
@@ -117,27 +117,27 @@ typedef struct Query
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
-	Node	   *utilityStmt;	/* non-null if commandType == CMD_UTILITY */
+	Node	   *utilityStmt;	/* non-null if commandType == CMD_UTILITY  utility类型的语句，通常为DDL语句 */
 
 	int			resultRelation; /* rtable index of target relation for
-								 * INSERT/UPDATE/DELETE; 0 for SELECT */
+								 * INSERT/UPDATE/DELETE; 0 for SELECT  INSERT/UPDATE/DELETE操作的目标表      */
 
-	bool		hasAggs;		/* has aggregates in tlist or havingQual */
-	bool		hasWindowFuncs; /* has window functions in tlist */
-	bool		hasTargetSRFs;	/* has set-returning functions in tlist */
-	bool		hasSubLinks;	/* has subquery SubLink */
+	bool		hasAggs;		/* has aggregates in tlist or havingQual 是否在tlist 或 havingQual上有聚集操作 */
+	bool		hasWindowFuncs; /* has window functions in tlist 是否有窗口函数 */
+	bool		hasTargetSRFs;	/* has set-returning functions in tlist 是否有SRF函数 */
+	bool		hasSubLinks;	/* has subquery SubLink 是否包含SubLink或SubQuery */
 	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
 	bool		hasRecursive;	/* WITH RECURSIVE was specified */
 	bool		hasModifyingCTE;	/* has INSERT/UPDATE/DELETE in WITH */
 	bool		hasForUpdate;	/* FOR [KEY] UPDATE/SHARE was specified */
 	bool		hasRowSecurity; /* rewriter has applied some RLS policy */
 
-	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
+	List	   *cteList;		/* WITH list (of CommonTableExpr's)  通用表达式子句 */
 
-	List	   *rtable;			/* list of range table entries */
-	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
+	List	   *rtable;			/* list of range table entries SQL语句涉及的表清单  */
+	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) SQL语句中涉及表的连接关系及约束关系 */
 
-	List	   *targetList;		/* target list (of TargetEntry) */
+	List	   *targetList;		/* target list (of TargetEntry) SQL语句中涉及的 */
 
 	OverridingKind override;	/* OVERRIDING clause */
 
@@ -149,7 +149,7 @@ typedef struct Query
 
 	List	   *groupingSets;	/* a list of GroupingSet's if present */
 
-	Node	   *havingQual;		/* qualifications applied to groups */
+	Node	   *havingQual;		/* qualifications applied to groups having子句 */
 
 	List	   *windowClause;	/* a list of WindowClause's */
 
@@ -959,14 +959,14 @@ typedef struct PartitionCmd
  */
 typedef enum RTEKind
 {
-	RTE_RELATION,				/* ordinary relation reference */
-	RTE_SUBQUERY,				/* subquery in FROM */
-	RTE_JOIN,					/* join */
-	RTE_FUNCTION,				/* function in FROM */
-	RTE_TABLEFUNC,				/* TableFunc(.., column list) */
-	RTE_VALUES,					/* VALUES (<exprlist>), (<exprlist>), ... */
-	RTE_CTE,					/* common table expr (WITH list element) */
-	RTE_NAMEDTUPLESTORE,		/* tuplestore, e.g. for AFTER triggers */
+	RTE_RELATION,				/* ordinary relation reference 普通表 */
+	RTE_SUBQUERY,				/* subquery in FROM 子查询 */
+	RTE_JOIN,					/* join JOIN产生的表 */
+	RTE_FUNCTION,				/* function in FROM 可以作为表的函数返回的表 */
+	RTE_TABLEFUNC,				/* TableFunc(.., column list)   TABLE函数类型的表 */
+	RTE_VALUES,					/* VALUES (<exprlist>), (<exprlist>), ...   VALUES表达式产生的表 */
+	RTE_CTE,					/* common table expr (WITH list element)  WITH语句附带的公共表 */
+	RTE_NAMEDTUPLESTORE,		/* tuplestore, e.g. for AFTER triggers  触发器使用 */
 	RTE_RESULT					/* RTE represents an empty FROM clause; such
 								 * RTEs are added by the planner, they're not
 								 * present during parsing or rewriting */
@@ -976,7 +976,7 @@ typedef struct RangeTblEntry
 {
 	NodeTag		type;
 
-	RTEKind		rtekind;		/* see above */
+	RTEKind		rtekind;		/* see above  范围表的类型 */
 
 	/*
 	 * XXX the fields applicable to only some rte kinds should be merged into
@@ -1003,6 +1003,7 @@ typedef struct RangeTblEntry
 	 * target table.  We leave such RTEs with their original lockmode so as to
 	 * avoid getting an additional, lesser lock.
 	 */
+	 // For RTE_RELATION，普通的表
 	Oid			relid;			/* OID of the relation */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
 	int			rellockmode;	/* lock level that query requires on the rel */
@@ -1010,8 +1011,9 @@ typedef struct RangeTblEntry
 
 	/*
 	 * Fields valid for a subquery RTE (else NULL):
+	 * For RTE_SUBQUERY，子查询类型的表
 	 */
-	Query	   *subquery;		/* the sub-query */
+	Query	   *subquery;		/* the sub-query 子查询的查询树 */
 	bool		security_barrier;	/* is from security_barrier view? */
 
 	/*
@@ -1031,8 +1033,9 @@ typedef struct RangeTblEntry
 	 * Also, once planning begins, joinaliasvars items can be almost anything,
 	 * as a result of subquery-flattening substitutions.
 	 */
-	JoinType	jointype;		/* type of join */
-	List	   *joinaliasvars;	/* list of alias-var expansions */
+	// For RTE_JOIN，连接类型的表
+	JoinType	jointype;		/* type of join JOIN（连接）的类型 */
+	List	   *joinaliasvars;	/* list of alias-var expansions JOIN（连接）的表的所有列的集合 */
 
 	/*
 	 * Fields valid for a function RTE (else NIL/zero):
