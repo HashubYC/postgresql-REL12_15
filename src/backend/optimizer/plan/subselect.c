@@ -1295,17 +1295,21 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * to the inner (necessarily true, other than the Vars that we build
 	 * below). Therefore this is a lot easier than what pull_up_subqueries has
 	 * to go through.
+	 * 生成新的RangeTblEntry节点
 	 */
 	rte = addRangeTableEntryForSubquery(pstate,
 										subselect,
 										makeAlias("ANY_subquery", NIL),
 										false,
 										false);
+	// 加入到上层的 rtable 中，以获得下标值
 	parse->rtable = lappend(parse->rtable, rte);
+	// 获得rtindex
 	rtindex = list_length(parse->rtable);
 
 	/*
 	 * Form a RangeTblRef for the pulled-up sub-select.
+	 * 生成新的 RangeTableRef 节点
 	 */
 	rtr = makeNode(RangeTblRef);
 	rtr->rtindex = rtindex;
