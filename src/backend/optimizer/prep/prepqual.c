@@ -547,15 +547,18 @@ process_duplicate_ors(List *orlist)
 	 * clause that's not an AND, we can treat it as a one-element AND clause,
 	 * which necessarily wins as shortest.
 	 */
+	// 找最短
 	foreach(temp, orlist)
 	{
 		Expr	   *clause = (Expr *) lfirst(temp);
 
+		// 查看AND约束条件的长度
 		if (is_andclause(clause))
 		{
 			List	   *subclauses = ((BoolExpr *) clause)->args;
-			int			nclauses = list_length(subclauses);
+			int			nclauses = list_length(subclauses); // 获得长度
 
+			// 比较长度，记录比较短的约束条件
 			if (reference == NIL || nclauses < num_subclauses)
 			{
 				reference = subclauses;
@@ -564,6 +567,10 @@ process_duplicate_ors(List *orlist)
 		}
 		else
 		{
+			// 如果有不是AND类型的约束条件，全部记录下来 
+			// 这里可能是带有表达式的约束条件或者单个的约束条件 
+			// 例1：(A AND B) OR A 
+			// 例2：(A IS NULL AND B) OR A IS NULL
 			reference = list_make1(clause);
 			break;
 		}
@@ -627,6 +634,7 @@ process_duplicate_ors(List *orlist)
 	 * Note that because we use list_difference, any multiple occurrences of a
 	 * winning clause in an AND sub-clause will be removed automatically.
 	 */
+	// 提取公共项
 	neworlist = NIL;
 	foreach(temp, orlist)
 	{
@@ -636,9 +644,11 @@ process_duplicate_ors(List *orlist)
 		{
 			List	   *subclauses = ((BoolExpr *) clause)->args;
 
+			// winners 是公共项，提取出去
 			subclauses = list_difference(subclauses, winners);
 			if (subclauses != NIL)
 			{
+				// 提取之后，将剩余的项生成一个新的约束条件，保存到neworlist中
 				if (list_length(subclauses) == 1)
 					neworlist = lappend(neworlist, linitial(subclauses));
 				else
@@ -646,6 +656,7 @@ process_duplicate_ors(List *orlist)
 			}
 			else
 			{
+				// 如果提取之后没有剩余项，例如(A AND B AND C) OR (A AND B)
 				neworlist = NIL;	/* degenerate case, see above */
 				break;
 			}
@@ -656,6 +667,7 @@ process_duplicate_ors(List *orlist)
 				neworlist = lappend(neworlist, clause);
 			else
 			{
+				// 如果提取之后没有剩余项，例如(A AND B) OR (A)
 				neworlist = NIL;	/* degenerate case, see above */
 				break;
 			}

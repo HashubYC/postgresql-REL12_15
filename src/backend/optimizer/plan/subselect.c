@@ -1330,12 +1330,12 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 * And finally, build the JoinExpr node.
 	 */
 	result = makeNode(JoinExpr);
-	result->jointype = JOIN_SEMI;
+	result->jointype = JOIN_SEMI; // 连接类型是Semi Join
 	result->isNatural = false;
-	result->larg = NULL;		/* caller must fill this in */
+	result->larg = NULL;		/* caller must fill this in  pull_up_sublinks_qual_recurse函数去填充 */
 	result->rarg = (Node *) rtr;
 	result->usingClause = NIL;
-	result->quals = quals;
+	result->quals = quals; // SubLink.testexpr转换出来的表达式
 	result->alias = NULL;
 	result->rtindex = 0;		/* we don't need an RTE for it */
 
@@ -1523,6 +1523,7 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	 * clause, but that traditionally is used as an optimization fence, so we
 	 * don't.)
 	 */
+	// 判断EXISTS_SUBLINK子连接的子句是否 "简单"，不满足其中的任意一项，子连接都不能提升
 	if (query->commandType != CMD_SELECT ||
 		query->setOperations ||
 		query->hasAggs ||
@@ -1542,6 +1543,9 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	 * of writing EXISTS(SELECT ... LIMIT 1) as an optimization.  If there's a
 	 * LIMIT with anything else as argument, though, we can't simplify.
 	 */
+	// 如果通过了上面的检查，那么还可以尝试简化这个子连接 
+	// 由于EXISTS类型的子连接具有找到一个即可的特点 
+	// 因此LIMIT子句如果只是对结果进行限制，这个子句是可以消除的
 	if (query->limitCount)
 	{
 		/*
@@ -1576,6 +1580,7 @@ simplify_EXISTS_query(PlannerInfo *root, Query *query)
 	 * since our parsetree representation of these clauses depends on the
 	 * targetlist, we'd better throw them away if we drop the targetlist.)
 	 */
+	// 下面这些也不会影响EXISTS类型的子连接的结果，也可以简化掉
 	query->targetList = NIL;
 	query->groupClause = NIL;
 	query->windowClause = NIL;

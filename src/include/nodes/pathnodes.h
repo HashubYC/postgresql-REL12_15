@@ -2186,8 +2186,8 @@ typedef struct AppendRelInfo
 	 * parent_relid, but never more than one per child_relid, since a given
 	 * RTE cannot be a child of more than one append parent.
 	 */
-	Index		parent_relid;	/* RT index of append parent rel */
-	Index		child_relid;	/* RT index of append child rel */
+	Index		parent_relid;	/* RT index of append parent rel  父表的rtindex */
+	Index		child_relid;	/* RT index of append child rel  子表的rtindex */
 
 	/*
 	 * For an inheritance appendrel, the parent and child are both regular
@@ -2195,8 +2195,8 @@ typedef struct AppendRelInfo
 	 * whole-row Vars.  For a UNION-ALL appendrel, the parent and child are
 	 * both subqueries with no named rowtype, and we store InvalidOid here.
 	 */
-	Oid			parent_reltype; /* OID of parent's composite type */
-	Oid			child_reltype;	/* OID of child's composite type */
+	Oid			parent_reltype; /* OID of parent's composite type  创建父表的时候在pg_type中生成的行类型 */
+	Oid			child_reltype;	/* OID of child's composite type  创建子表的时候在pg_type中生成的行类型 */
 
 	/*
 	 * The N'th element of this list is a Var or expression representing the

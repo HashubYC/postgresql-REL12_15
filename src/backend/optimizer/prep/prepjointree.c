@@ -46,16 +46,23 @@
 
 typedef struct pullup_replace_vars_context
 {
-	PlannerInfo *root;
-	List	   *targetlist;		/* tlist of subquery being pulled up */
-	RangeTblEntry *target_rte;	/* RTE of subquery */
+	PlannerInfo *root; // 查询优化模块的上下文结构体
+	List	   *targetlist;		/* tlist of subquery being pulled up  子查询中的投影列，用这里的Var替换上层的Var */
+	RangeTblEntry *target_rte;	/* RTE of subquery  子查询的RangeTblEntry结构体 */
+
+	// 子查询subquery->jointree中涉及的表的relids集合 
+	// 主要用于在包含LATREAL语义的时候， 
+	// 如果子查询的投影列中引用了上层表的列，那么就需要使用PlaceHolderVar
 	Relids		relids;			/* relids within subquery, as numbered after
 								 * pullup (set only if target_rte->lateral) */
-	bool	   *outer_hasSubLinks;	/* -> outer query's hasSubLinks */
-	int			varno;			/* varno of subquery */
-	bool		need_phvs;		/* do we need PlaceHolderVars? */
+	bool	   *outer_hasSubLinks;	/* -> outer query's hasSubLinks  外层查询有子连接 */
+	int			varno;			/* varno of subquery  当前子查询的RangeTblEntry对应的rtindex */
+	bool		need_phvs;		/* do we need PlaceHolderVars?  是否需要使用PlaceHolderVar结构体 */
+
+	// 它的作用是指明下层查询中只要出现了表达式，就使用 PlaceHolderVar 进行封装，
+	// 目前主要是针对 Appendrel 子表的下的表达式
 	bool		wrap_non_vars;	/* do we need 'em on *all* non-Vars? */
-	Node	  **rv_cache;		/* cache for results with PHVs */
+	Node	  **rv_cache;		/* cache for results with PHVs  给每个Var生成结构体之后会记录到这里，防止重复生成 */
 } pullup_replace_vars_context;
 
 typedef struct reduce_outer_joins_state
